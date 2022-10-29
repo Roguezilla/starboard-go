@@ -6,7 +6,11 @@ func FormattedEmoji(emoji discordgo.Emoji) string {
 	if emoji.ID == "" {
 		return emoji.Name
 	} else {
-		return "<:" + emoji.Name + ":" + emoji.ID + ">"
+		temp := "<"
+		if emoji.Animated {
+			temp += "a"
+		}
+		return temp + ":" + emoji.Name + ":" + emoji.ID + ">"
 	}
 }
 
