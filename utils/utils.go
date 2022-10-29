@@ -23,10 +23,18 @@ func EmojiCount(s *discordgo.Session, channelId string, messageId string, emoji 
 		}
 	}
 
-	users, err := s.MessageReactions(channelId, messageId, editedEmoji, 100, "", "")
-	if err != nil {
+	if users, err := s.MessageReactions(channelId, messageId, editedEmoji, 100, "", ""); err != nil {
 		return -1
+	} else {
+		return len(users)
+	}
+}
+
+func CheckPermission(s *discordgo.Session, message *discordgo.Message, permission int64) (bool, error) {
+	perms, err := s.UserChannelPermissions(message.Author.ID, message.ChannelID)
+	if err == nil && (perms&permission == permission) {
+		return true, nil
 	}
 
-	return len(users)
+	return false, err
 }

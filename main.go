@@ -37,6 +37,7 @@ func main() {
 
 	// intents
 	session.Identify.Intents |= discordgo.IntentMessageContent
+	session.Identify.Intents |= discordgo.IntentsGuildMembers
 	session.Identify.Intents |= discordgo.IntentGuildMessageReactions
 
 	err = session.Open()

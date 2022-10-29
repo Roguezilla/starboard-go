@@ -6,6 +6,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"roguezilla.github.io/starboard/sqldb"
+	"roguezilla.github.io/starboard/utils"
 )
 
 func Handler(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -34,16 +35,17 @@ func setup(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, args .
 		return
 	}
 
-	if setup, err := sqldb.IsSetup(m.GuildID); err != nil || setup {
-		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, err.Error())
-		}
-
-		if setup {
-			s.ChannelMessageSend(m.ChannelID, "Server already setup.")
-		}
-
+	if has, err := utils.CheckPermission(s, m.Message, discordgo.PermissionManageMessages); !has {
 		return
+	} else if err != nil {
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+	}
+
+	if setup, err := sqldb.IsSetup(m.GuildID); setup {
+		s.ChannelMessageSend(m.ChannelID, "Server already setup.")
+		return
+	} else if err != nil {
+		s.ChannelMessageSend(m.ChannelID, err.Error())
 	}
 
 	parsed, err := strconv.ParseInt(args[2], 10, 0)
