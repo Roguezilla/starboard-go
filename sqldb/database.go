@@ -24,7 +24,7 @@ func Close() {
 }
 
 func GetToken() (string, error) {
-	rows, err := conn.Query("SELECT value FROM settings WHERE name LIKE 'token'")
+	rows, err := conn.Query("SELECT value FROM settings WHERE key = 'token'")
 	if err != nil {
 		return "", err
 	}
@@ -43,8 +43,8 @@ func GetToken() (string, error) {
 	return token, nil
 }
 
-func IsSetup(guildId string) (bool, error) {
-	_, err := GetEmoji(guildId)
+func IsSetup(guildID string) (bool, error) {
+	_, err := GetEmoji(guildID)
 	if err != nil {
 		return false, err
 	}
@@ -52,30 +52,21 @@ func IsSetup(guildId string) (bool, error) {
 	return true, nil
 }
 
-func Setup(guildId string, channelId string, emoji string, amount int64) (bool, error) {
-	parsedGuildId, err := strconv.ParseInt(guildId, 10, 0)
-	if err != nil {
-		return false, err
-	}
-	parsedChannelId, err := strconv.ParseInt(channelId, 10, 0)
-	if err != nil {
-		return false, err
-	}
-
-	if _, err := conn.Exec("INSERT INTO server (server_id, channel_id, archive_emote, archive_amount) VALUES (?, ?, ?, ?)", parsedGuildId, parsedChannelId, emoji, amount); err != nil {
+func Setup(guildID string, channelID string, emoji string, amount int64) (bool, error) {
+	if _, err := conn.Exec("INSERT INTO guild_data (guild, channel, emoji, amount) VALUES (?, ?, ?, ?)", guildID, channelID, emoji, amount); err != nil {
 		return false, err
 	}
 
 	return true, nil
 }
 
-func GetChannel(guildId string) (int, error) {
-	stmt, err := conn.Prepare("SELECT archive_channel FROM server WHERE server_id = ?")
+func GetChannel(guildID string) (int, error) {
+	stmt, err := conn.Prepare("SELECT channel FROM guild_data WHERE guild = ?")
 	if err != nil {
 		return -1, err
 	}
 
-	parsed, err := strconv.ParseInt(guildId, 10, 0)
+	parsed, err := strconv.ParseInt(guildID, 10, 0)
 	if err != nil {
 		return -1, err
 	}
@@ -88,130 +79,97 @@ func GetChannel(guildId string) (int, error) {
 	return archiveChannel, nil
 }
 
-func SetChannel(guildId string, channel int) error {
-	parsed, err := strconv.ParseInt(guildId, 10, 0)
+func SetChannel(guildID string, channel int) error {
+	parsed, err := strconv.ParseInt(guildID, 10, 0)
 	if err != nil {
 		return err
 	}
 
-	if _, err := conn.Exec("UPDATE server SET archive_channel = ? WHERE server_id = ?", channel, parsed); err != nil {
+	if _, err := conn.Exec("UPDATE guild_data SET channel = ? WHERE guild = ?", channel, parsed); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func GetEmoji(guildId string) (string, error) {
-	stmt, err := conn.Prepare("SELECT archive_emote FROM server WHERE server_id = ?")
-	if err != nil {
-		return "", err
-	}
-
-	parsed, err := strconv.ParseInt(guildId, 10, 0)
+func GetEmoji(guildID string) (string, error) {
+	stmt, err := conn.Prepare("SELECT emoji FROM guild_data WHERE guild = ?")
 	if err != nil {
 		return "", err
 	}
 
 	var archiveEmoji string
-	if err = stmt.QueryRow(parsed).Scan(&archiveEmoji); err != nil {
+	if err = stmt.QueryRow(guildID).Scan(&archiveEmoji); err != nil {
 		return "", err
 	}
 
 	return archiveEmoji, nil
 }
 
-func SetEmoji(guildId string, emote string) error {
-	parsed, err := strconv.ParseInt(guildId, 10, 0)
+func SetEmoji(guildID string, emote string) error {
+	parsed, err := strconv.ParseInt(guildID, 10, 0)
 	if err != nil {
 		return err
 	}
 
-	if _, err := conn.Exec("UPDATE server SET archive_emote = ? WHERE server_id = ?", emote, parsed); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func GetCount(guildId string) (int, error) {
-	stmt, err := conn.Prepare("SELECT archive_emote_amount FROM server WHERE server_id = ?")
-	if err != nil {
-		return -1, err
-	}
-
-	parsed, err := strconv.ParseInt(guildId, 10, 0)
-	if err != nil {
-		return -1, err
-	}
-
-	var archiveCount int
-	if err = stmt.QueryRow(parsed).Scan(&archiveCount); err != nil {
-		return -1, err
-	}
-
-	return archiveCount, nil
-}
-
-func SetCount(guildId string, amount int64) error {
-	parsed, err := strconv.ParseInt(guildId, 10, 0)
-	if err != nil {
-		return err
-	}
-
-	if _, err := conn.Exec("UPDATE server SET archive_emote_amount = ? WHERE server_id = ?", amount, parsed); err != nil {
+	if _, err := conn.Exec("UPDATE guild_data SET emoji = ? WHERE guild = ?", emote, parsed); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func GetCustomCount(guildId string, channelId string) (int, error) {
-	stmt, err := conn.Prepare("SELECT amount FROM custom_count WHERE server_id = ? AND channel_id = ?")
+func GetCount(guildID string) (int, error) {
+	stmt, err := conn.Prepare("SELECT amount FROM guild_data WHERE guild = ?")
 	if err != nil {
 		return -1, err
 	}
 
-	parsedGuildId, err := strconv.ParseInt(guildId, 10, 0)
-	if err != nil {
+	var amount int
+	if err = stmt.QueryRow(guildID).Scan(&amount); err != nil {
 		return -1, err
 	}
-	parsedChannelId, err := strconv.ParseInt(channelId, 10, 0)
+
+	return amount, nil
+}
+
+func SetCount(guildID string, amount int64) error {
+	if _, err := conn.Exec("UPDATE guild_data SET amount = ? WHERE guild = ?", amount, guildID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetCustomCount(guildID string, channelID string) (int, error) {
+	stmt, err := conn.Prepare("SELECT amount FROM custom_count WHERE guild = ? AND channel = ?")
 	if err != nil {
 		return -1, err
 	}
 
-	var archiveCount int
-	err = stmt.QueryRow(parsedGuildId, parsedChannelId).Scan(&archiveCount)
+	var amount int
+	err = stmt.QueryRow(guildID, channelID).Scan(&amount)
 	if err == sql.ErrNoRows {
 		return -1, nil
 	} else if err != nil {
 		return -1, err
 	}
 
-	return archiveCount, nil
+	return amount, nil
 }
 
-func SetCustomCount(guildId string, channelId string, amount int64) error {
-	count, err := GetCustomCount(guildId, channelId)
-	if err != nil {
-		return err
-	}
-
-	parsedGuildId, err := strconv.ParseInt(guildId, 10, 0)
-	if err != nil {
-		return err
-	}
-	parsedChannelId, err := strconv.ParseInt(channelId, 10, 0)
+func SetCustomCount(guildID string, channelID string, amount int64) error {
+	count, err := GetCustomCount(guildID, channelID)
 	if err != nil {
 		return err
 	}
 
 	if count == -1 {
-		if _, err := conn.Exec("INSERT INTO custom_count (server_id, channel_id, amount) VALUES (?, ?, ?)", parsedGuildId, parsedChannelId, amount); err != nil {
+		if _, err := conn.Exec("INSERT INTO custom_count (guild, channel, amount) VALUES (?, ?, ?)", guildID, channelID, amount); err != nil {
 			return err
 		}
 	} else {
-		if _, err := conn.Exec("UPDATE custom_count SET amount = ? WHERE server_id = ? AND channel_id = ?", amount, parsedGuildId, parsedChannelId); err != nil {
+		if _, err := conn.Exec("UPDATE custom_count SET amount = ? WHERE guild = ? AND channel = ?", amount, guildID, channelID); err != nil {
 			return err
 		}
 	}
@@ -219,27 +177,14 @@ func SetCustomCount(guildId string, channelId string, amount int64) error {
 	return nil
 }
 
-func IsArchived(guildId string, channelId string, msgId string) (bool, error) {
-	stmt, err := conn.Prepare("SELECT id FROM ignore_list WHERE server_id = ? AND channel_id = ? AND message_id = ?")
-	if err != nil {
-		return false, err
-	}
-
-	parsedGuildId, err := strconv.ParseInt(guildId, 10, 0)
-	if err != nil {
-		return false, err
-	}
-	parsedChannelId, err := strconv.ParseInt(channelId, 10, 0)
-	if err != nil {
-		return false, err
-	}
-	parsedMsgId, err := strconv.ParseInt(msgId, 10, 0)
+func IsArchived(guildID string, channelID string, msgID string) (bool, error) {
+	stmt, err := conn.Prepare("SELECT id FROM archive WHERE guild = ? AND channel = ? AND message = ?")
 	if err != nil {
 		return false, err
 	}
 
 	var id int
-	err = stmt.QueryRow(parsedGuildId, parsedChannelId, parsedMsgId).Scan(&id)
+	err = stmt.QueryRow(guildID, channelID, msgID).Scan(&id)
 	if err == sql.ErrNoRows {
 		return false, nil
 	} else if err != nil {
@@ -249,21 +194,8 @@ func IsArchived(guildId string, channelId string, msgId string) (bool, error) {
 	return true, nil
 }
 
-func Archive(guildId string, channelId string, msgId string) error {
-	parsedGuildId, err := strconv.ParseInt(guildId, 10, 0)
-	if err != nil {
-		return err
-	}
-	parsedChannelId, err := strconv.ParseInt(channelId, 10, 0)
-	if err != nil {
-		return err
-	}
-	parsedMsgId, err := strconv.ParseInt(msgId, 10, 0)
-	if err != nil {
-		return err
-	}
-
-	if _, err := conn.Exec("INSERT INTO ignore_list (server_id, channel_id, message_id) VALUES (?, ?, ?)", parsedGuildId, parsedChannelId, parsedMsgId); err != nil {
+func Archive(guildID string, channelID string, msgID string) error {
+	if _, err := conn.Exec("INSERT INTO archive (guild, channel, message) VALUES (?, ?, ?)", guildID, channelID, msgID); err != nil {
 		return err
 	}
 

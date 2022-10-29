@@ -14,7 +14,7 @@ func FormattedEmoji(emoji discordgo.Emoji) string {
 	}
 }
 
-func EmojiCount(s *discordgo.Session, channelId string, messageId string, emoji discordgo.Emoji) int {
+func EmojiCount(s *discordgo.Session, channelID string, messageId string, emoji discordgo.Emoji) int {
 	var editedEmoji = emoji.Name
 	if emoji.ID != "" {
 		editedEmoji = editedEmoji + ":" + emoji.ID
@@ -23,7 +23,7 @@ func EmojiCount(s *discordgo.Session, channelId string, messageId string, emoji 
 		}
 	}
 
-	if users, err := s.MessageReactions(channelId, messageId, editedEmoji, 100, "", ""); err != nil {
+	if users, err := s.MessageReactions(channelID, messageId, editedEmoji, 100, "", ""); err != nil {
 		return -1
 	} else {
 		return len(users)

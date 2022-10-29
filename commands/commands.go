@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"database/sql"
 	"strconv"
 	"strings"
 
@@ -15,8 +16,6 @@ func Handler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		source(s, m, 0, split[1:]...)
 	case "sb!setup":
 		setup(s, m, 3, split[1:]...)
-	default:
-		s.ChannelMessageSend(m.ChannelID, "Invalid command.")
 	}
 }
 
@@ -44,7 +43,7 @@ func setup(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, args .
 	if setup, err := sqldb.IsSetup(m.GuildID); setup {
 		s.ChannelMessageSend(m.ChannelID, "Server already setup.")
 		return
-	} else if err != nil {
+	} else if err != nil && err != sql.ErrNoRows {
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 	}
 
@@ -54,5 +53,6 @@ func setup(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, args .
 		return
 	}
 
-	sqldb.Setup(m.GuildID, args[0], args[1], parsed)
+	sqldb.Setup(m.GuildID, args[0][2:len(args[0])-1], args[1], parsed)
+	s.ChannelMessageSend(m.ChannelID, "Successful.")
 }

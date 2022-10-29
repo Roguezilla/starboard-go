@@ -21,10 +21,6 @@ func onReady(s *discordgo.Session, m *discordgo.Ready) {
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if setup, err := sqldb.IsSetup(m.GuildID); err != nil || (err == nil && !setup) {
-		return
-	}
-
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
@@ -35,9 +31,8 @@ func messageReactionAdd(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 	if setup, err := sqldb.IsSetup(m.GuildID); err != nil || (err == nil && !setup) {
 		return
 	}
-	/*
-		if archived, err := sqldb.IsArchived(m.GuildID, m.ChannelID, m.MessageID); err == nil && !archived {
-			sqldb.Archive(m.GuildID, m.ChannelID, m.MessageID)
-		}
-	*/
+
+	if archived, err := sqldb.IsArchived(m.GuildID, m.ChannelID, m.MessageID); err == nil && !archived {
+		sqldb.Archive(m.GuildID, m.ChannelID, m.MessageID)
+	}
 }
