@@ -2,7 +2,6 @@ package sqldb
 
 import (
 	"database/sql"
-	"errors"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -23,20 +22,14 @@ func Close() {
 }
 
 func GetToken() (string, error) {
-	rows, err := conn.Query("SELECT value FROM settings WHERE key = 'token'")
+	stmt, err := conn.Prepare("SELECT value FROM settings WHERE key = 'token'")
 	if err != nil {
 		return "", err
 	}
-	defer rows.Close()
 
 	var token string
-
-	if rows.Next() {
-		if err = rows.Scan(&token); err != nil {
-			return "", err
-		}
-	} else {
-		return "", errors.New("No token in database")
+	if err = stmt.QueryRow().Scan(&token); err != nil {
+		return "", err
 	}
 
 	return token, nil
