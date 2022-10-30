@@ -4,8 +4,10 @@ import (
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
+	"roguezilla.github.io/starboard/cogs"
 	"roguezilla.github.io/starboard/commands"
 	"roguezilla.github.io/starboard/sqldb"
+	"roguezilla.github.io/starboard/utils"
 )
 
 func onReady(s *discordgo.Session, m *discordgo.Ready) {
@@ -31,8 +33,61 @@ func messageReactionAdd(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 	if setup, err := sqldb.IsSetup(m.GuildID); err != nil || (err == nil && !setup) {
 		return
 	}
+	// eventually custom embed stuff for reddit, instagram, pixiv and twitter will be here
 
-	if archived, err := sqldb.IsArchived(m.GuildID, m.ChannelID, m.MessageID); err == nil && !archived {
-		sqldb.Archive(m.GuildID, m.ChannelID, m.MessageID)
+	// starboard logic
+	archived, err := sqldb.IsArchived(m.GuildID, m.ChannelID, m.MessageID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+	if archived {
+		return
+	}
+
+	emoji, err := sqldb.Emoji(m.GuildID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+	if emoji != utils.FormattedEmoji(m.Emoji) {
+		return
+	}
+
+	msg, err := s.ChannelMessage(m.ChannelID, m.MessageID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+	msg.GuildID = m.GuildID // ChannelMessage returns Message with empty GuildID
+
+	amount, err := sqldb.ChannelAmount(m.GuildID, m.ChannelID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	if amount == -1 {
+		amount, err = sqldb.Amount(m.GuildID)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+	}
+
+	emojiCount, err := utils.EmojiCount(s, m)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	if emojiCount >= amount {
+		channelID, err := sqldb.Channel(m.GuildID)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+
+		cogs.Archive(s, msg, channelID)
 	}
 }

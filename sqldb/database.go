@@ -21,7 +21,7 @@ func Close() {
 	conn.Close()
 }
 
-func GetToken() (string, error) {
+func Token() (string, error) {
 	stmt, err := conn.Prepare("SELECT value FROM settings WHERE key = 'token'")
 	if err != nil {
 		return "", err
@@ -36,7 +36,7 @@ func GetToken() (string, error) {
 }
 
 func IsSetup(guildID string) (bool, error) {
-	_, err := GetEmoji(guildID)
+	_, err := Emoji(guildID)
 	if err != nil {
 		return false, err
 	}
@@ -52,7 +52,7 @@ func Setup(guildID string, channelID string, emoji string, amount int64) error {
 	return nil
 }
 
-func GetChannel(guildID string) (string, error) {
+func Channel(guildID string) (string, error) {
 	stmt, err := conn.Prepare("SELECT channel FROM guild_data WHERE guild = ?")
 	if err != nil {
 		return "", err
@@ -74,7 +74,7 @@ func SetChannel(guildID string, channelID string) error {
 	return nil
 }
 
-func GetEmoji(guildID string) (string, error) {
+func Emoji(guildID string) (string, error) {
 	stmt, err := conn.Prepare("SELECT emoji FROM guild_data WHERE guild = ?")
 	if err != nil {
 		return "", err
@@ -96,7 +96,7 @@ func SetEmoji(guildID string, emoji string) error {
 	return nil
 }
 
-func GetAmount(guildID string) (int, error) {
+func Amount(guildID string) (int, error) {
 	stmt, err := conn.Prepare("SELECT amount FROM guild_data WHERE guild = ?")
 	if err != nil {
 		return -1, err
@@ -118,7 +118,7 @@ func SetAmount(guildID string, amount int64) error {
 	return nil
 }
 
-func GetChannelAmount(guildID string, channelID string) (int, error) {
+func ChannelAmount(guildID string, channelID string) (int, error) {
 	stmt, err := conn.Prepare("SELECT amount FROM custom_channel_amount WHERE guild = ? AND channel = ?")
 	if err != nil {
 		return -1, err
@@ -136,7 +136,7 @@ func GetChannelAmount(guildID string, channelID string) (int, error) {
 }
 
 func SetChannelAmount(guildID string, channelID string, amount int64) error {
-	channelAmount, err := GetChannelAmount(guildID, channelID)
+	channelAmount, err := ChannelAmount(guildID, channelID)
 	if err != nil {
 		return err
 	}

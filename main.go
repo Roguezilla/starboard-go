@@ -18,7 +18,7 @@ func main() {
 	}
 	defer sqldb.Close()
 
-	token, err := sqldb.GetToken()
+	token, err := sqldb.Token()
 	if err != nil {
 		fmt.Println("sqldb.GetToken: ", err)
 		return

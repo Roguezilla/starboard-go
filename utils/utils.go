@@ -14,20 +14,21 @@ func FormattedEmoji(emoji discordgo.Emoji) string {
 	}
 }
 
-func EmojiCount(s *discordgo.Session, channelID string, messageId string, emoji discordgo.Emoji) int {
-	var editedEmoji = emoji.Name
-	if emoji.ID != "" {
-		editedEmoji = editedEmoji + ":" + emoji.ID
-		if emoji.Animated {
+func EmojiCount(s *discordgo.Session, reactionEvent *discordgo.MessageReactionAdd) (int, error) {
+	var editedEmoji = reactionEvent.Emoji.Name
+	if reactionEvent.Emoji.ID != "" {
+		editedEmoji = editedEmoji + ":" + reactionEvent.Emoji.ID
+		if reactionEvent.Emoji.Animated {
 			editedEmoji = "a:" + editedEmoji
 		}
 	}
 
-	if users, err := s.MessageReactions(channelID, messageId, editedEmoji, 100, "", ""); err != nil {
-		return -1
-	} else {
-		return len(users)
+	users, err := s.MessageReactions(reactionEvent.ChannelID, reactionEvent.MessageID, editedEmoji, 100, "", "")
+	if err != nil {
+		return -1, err
 	}
+
+	return len(users), nil
 }
 
 func CheckPermission(s *discordgo.Session, message *discordgo.Message, permission int64) (bool, error) {
