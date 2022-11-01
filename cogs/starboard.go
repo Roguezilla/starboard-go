@@ -1,7 +1,6 @@
 package cogs
 
 import (
-	"fmt"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -32,7 +31,6 @@ func buildEmbedInfo(s *discordgo.Session, m *discordgo.Message) embedInfo {
 		Content: m.Content,
 	}
 
-	fmt.Printf("overrides: %v\n", overrides)
 	if URL, ok := overrides[m.GuildID+m.ChannelID+m.ID]; ok {
 		isVideo := regexp.MustCompile(`.mp4|.mov|.webm`).MatchString(URL)
 

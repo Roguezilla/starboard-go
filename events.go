@@ -28,12 +28,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	commands.Handler(s, m)
+	cogs.PixivHandler(s, m)
+	cogs.TwitterHandler(s, m)
 }
+
 func messageReactionAdd(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 	if setup, err := sqldb.IsSetup(m.GuildID); err != nil || (err == nil && !setup) {
 		return
 	}
-	// eventually custom embed stuff for reddit, instagram, pixiv and twitter will be here
+	// eventually custom embed stuff for reddit and instagram
 
 	// starboard logic
 	archived, err := sqldb.IsArchived(m.GuildID, m.ChannelID, m.MessageID)
