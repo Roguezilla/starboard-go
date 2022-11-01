@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"roguezilla.github.io/starboard/cogs"
 	"roguezilla.github.io/starboard/sqldb"
 	"roguezilla.github.io/starboard/utils"
 )
@@ -26,6 +27,8 @@ func Handler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		setAmount(s, m, 1, split[1:]...)
 	case "sb!set_channel_amount":
 		setCustomAmount(s, m, 2, split[1:]...)
+	case "sb!override":
+		cogs.ArchiveOverrideCommand(s, m, 1, split[1:]...)
 	}
 }
 
