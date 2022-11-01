@@ -67,7 +67,7 @@ func setup(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, args .
 	}
 
 	if err := sqldb.Setup(m.GuildID, args[0][2:len(args[0])-1], args[1], parsed); err == nil {
-		s.ChannelMessageSendReply(m.ChannelID, "✅", m.Message.Reference())
+		s.ChannelMessageSendReply(m.ChannelID, "*✅*", m.Message.Reference())
 	}
 }
 
@@ -91,7 +91,7 @@ func delete(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, args 
 	}
 
 	if err := sqldb.Unarchive(m.MessageReference.GuildID, m.MessageReference.ChannelID, m.MessageReference.MessageID); err == nil {
-		s.ChannelMessageSendReply(m.ChannelID, "✅", m.Message.Reference())
+		s.ChannelMessageSendReply(m.ChannelID, "*✅*", m.Message.Reference())
 	}
 }
 
@@ -110,7 +110,7 @@ func setEmoji(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, arg
 	}
 	/* */
 	if err := sqldb.SetEmoji(m.GuildID, args[0]); err == nil {
-		s.ChannelMessageSendReply(m.ChannelID, "✅", m.Message.Reference())
+		s.ChannelMessageSendReply(m.ChannelID, "*✅*", m.Message.Reference())
 	}
 }
 
@@ -129,7 +129,7 @@ func setChannel(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, a
 	}
 	/* */
 	if err := sqldb.SetChannel(m.GuildID, args[0]); err == nil {
-		s.ChannelMessageSendReply(m.ChannelID, "✅", m.Message.Reference())
+		s.ChannelMessageSendReply(m.ChannelID, "*✅*", m.Message.Reference())
 	}
 }
 
@@ -154,7 +154,7 @@ func setAmount(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, ar
 	}
 
 	if err := sqldb.SetAmount(m.GuildID, parsed); err == nil {
-		s.ChannelMessageSendReply(m.ChannelID, "✅", m.Message.Reference())
+		s.ChannelMessageSendReply(m.ChannelID, "*✅*", m.Message.Reference())
 	}
 }
 
@@ -179,6 +179,6 @@ func setCustomAmount(s *discordgo.Session, m *discordgo.MessageCreate, numArgs i
 	}
 
 	if err := sqldb.SetChannelAmount(m.GuildID, args[0][2:len(args[0])-1], parsed); err == nil {
-		s.ChannelMessageSendReply(m.ChannelID, "✅", m.Message.Reference())
+		s.ChannelMessageSendReply(m.ChannelID, "*✅*", m.Message.Reference())
 	}
 }
