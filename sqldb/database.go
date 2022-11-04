@@ -35,21 +35,23 @@ func Token() (string, error) {
 	return token, nil
 }
 
-func IsSetup(guildID string) (bool, error) {
-	_, err := Emoji(guildID)
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
-}
-
 func Setup(guildID string, channelID string, emoji string, amount int64) error {
 	if _, err := conn.Exec("INSERT INTO guild_data (guild, channel, emoji, amount) VALUES (?, ?, ?, ?)", guildID, channelID, emoji, amount); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func IsSetup(guildID string) (bool, error) {
+	_, err := Emoji(guildID)
+	if err == sql.ErrNoRows {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func Channel(guildID string) (string, error) {
@@ -96,7 +98,7 @@ func SetEmoji(guildID string, emoji string) error {
 	return nil
 }
 
-func Amount(guildID string) (int, error) {
+func GlobalAmount(guildID string) (int, error) {
 	stmt, err := conn.Prepare("SELECT amount FROM guild_data WHERE guild = ?")
 	if err != nil {
 		return -1, err

@@ -4,10 +4,12 @@ import (
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
-	"roguezilla.github.io/starboard/cogs"
+	"roguezilla.github.io/starboard/cogs/galleries"
+	"roguezilla.github.io/starboard/cogs/pixiv"
+	"roguezilla.github.io/starboard/cogs/starboard"
+	"roguezilla.github.io/starboard/cogs/twitter"
 	"roguezilla.github.io/starboard/commands"
 	"roguezilla.github.io/starboard/sqldb"
-	"roguezilla.github.io/starboard/utils"
 )
 
 func onReady(s *discordgo.Session, m *discordgo.Ready) {
@@ -27,70 +29,25 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	commands.Handler(s, m)
-	cogs.PixivHandler(s, m)
-	cogs.TwitterHandler(s, m)
+	commands.HandleMessageCreate(s, m)
+	pixiv.HandleMessageCreate(s, m)
+	twitter.HandleMessageCreate(s, m)
+	galleries.HandleMessageCreate(s, m)
 }
 
 func messageReactionAdd(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
-	if setup, err := sqldb.IsSetup(m.GuildID); err != nil || (err == nil && !setup) {
+	if m.Member.User.ID == s.State.User.ID {
 		return
 	}
-	// eventually custom embed stuff for reddit and instagram
 
-	// starboard logic
-	archived, err := sqldb.IsArchived(m.GuildID, m.ChannelID, m.MessageID)
+	setup, err := sqldb.IsSetup(m.GuildID)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, err.Error())
+		s.ChannelMessageSendReply(m.ChannelID, err.Error(), &discordgo.MessageReference{GuildID: m.GuildID, ChannelID: m.ChannelID, MessageID: m.MessageID})
 		return
-	}
-	if archived {
-		return
-	}
-
-	emoji, err := sqldb.Emoji(m.GuildID)
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, err.Error())
-		return
-	}
-	if emoji != utils.FormattedEmoji(m.Emoji) {
+	} else if !setup {
 		return
 	}
 
-	msg, err := s.ChannelMessage(m.ChannelID, m.MessageID)
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, err.Error())
-		return
-	}
-	msg.GuildID = m.GuildID // ChannelMessage returns Message with empty GuildID
-
-	amount, err := sqldb.ChannelAmount(m.GuildID, m.ChannelID)
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, err.Error())
-		return
-	}
-
-	if amount == -1 {
-		amount, err = sqldb.Amount(m.GuildID)
-		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, err.Error())
-			return
-		}
-	}
-
-	emojiCount, err := utils.EmojiCount(s, m)
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, err.Error())
-		return
-	}
-
-	if emojiCount >= amount {
-		channelID, err := sqldb.Channel(m.GuildID)
-		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, err.Error())
-			return
-		}
-
-		cogs.Archive(s, msg, channelID)
-	}
+	galleries.HandleMessageReactionAdd(s, m)
+	starboard.HandleMessageReactionAdd(s, m)
 }
