@@ -1,7 +1,6 @@
 package starboard
 
 import (
-	"fmt"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -143,7 +142,6 @@ func buildEmbedInfo(s *discordgo.Session, m *discordgo.Message) embedInfo {
 				}
 			} else {
 				if reddit.ValidateEmbed(m.Embeds) || instagram.ValidateEmbed(m.Embeds) {
-					fmt.Printf("m.Embeds: %v\n", m.Embeds)
 					e.Flag = "image"
 					e.MediaURL = m.Embeds[0].Image.URL
 					if user, err := s.User(m.Embeds[0].Fields[0].Value[2 : len(m.Embeds[0].Fields[0].Value)-1]); err == nil {
