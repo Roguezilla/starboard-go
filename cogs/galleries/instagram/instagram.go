@@ -64,13 +64,21 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			Gallery:    entry.Gallery,
 		}
 
-		msg.Embeds[0].Fields = append(msg.Embeds[0].Fields, &discordgo.MessageEmbedField{
-			Name:   "Page",
-			Value:  strconv.Itoa(entry.CurrentIdx+1) + "/" + strconv.Itoa(len(entry.Gallery)),
-			Inline: true,
-		})
+		// for some reason, sometimes the page field doesn't appear in the sent message
+		// so we have to check for the amount of fields and add the missing one if need be
+		for len(msg.Embeds[0].Fields) < 2 {
+			msg.Embeds[0].Fields = append(msg.Embeds[0].Fields, &discordgo.MessageEmbedField{
+				Name:   "Page",
+				Value:  strconv.Itoa(entry.CurrentIdx+1) + "/" + strconv.Itoa(len(entry.Gallery)),
+				Inline: true,
+			})
 
-		s.ChannelMessageEditEmbeds(msg.ChannelID, msg.ID, msg.Embeds)
+			msg, err = s.ChannelMessageEditEmbeds(msg.ChannelID, msg.ID, msg.Embeds)
+			if err != nil {
+				s.ChannelMessageSendReply(m.ChannelID, err.Error(), &discordgo.MessageReference{GuildID: m.GuildID, ChannelID: m.ChannelID, MessageID: m.ID})
+				return
+			}
+		}
 
 		s.MessageReactionAdd(msg.ChannelID, msg.ID, string([]rune{11013, 65039}))
 		s.MessageReactionAdd(msg.ChannelID, msg.ID, string([]rune{10145, 65039}))
