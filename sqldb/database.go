@@ -21,6 +21,26 @@ func Close() {
 	conn.Close()
 }
 
+func CreateTables() error {
+	if _, err := conn.Exec("CREATE TABLE archive (id INTEGER NOT NULL, guild TEXT, channel TEXT, message TEXT, PRIMARY KEY(id));"); err != nil {
+		return err
+	}
+
+	if _, err := conn.Exec("CREATE TABLE custom_channel_amount(id INTEGER NOT NULL,  guild TEXT, channel TEXT, amount INTEGER, PRIMARY KEY(id));"); err != nil {
+		return err
+	}
+
+	if _, err := conn.Exec("CREATE TABLE guild_data(id INTEGER NOT NULL, guild TEXT, channel TEXT, emoji TEXT, amount BIGINT, PRIMARY KEY(id));"); err != nil {
+		return err
+	}
+
+	if _, err := conn.Exec("CREATE TABLE settings(id INTEGER NOT NULL, key TEXT, value TEXT, PRIMARY KEY(id));"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func Token() (string, error) {
 	stmt, err := conn.Prepare("SELECT value FROM settings WHERE key = 'token'")
 	if err != nil {
@@ -33,6 +53,14 @@ func Token() (string, error) {
 	}
 
 	return token, nil
+}
+
+func SetToken(token string) error {
+	if _, err := conn.Exec("INSERT INTO settings (key, value) VALUES (?, ?)", "token", token); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func Setup(guildID string, channelID string, emoji string, amount int64) error {

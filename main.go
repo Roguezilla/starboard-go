@@ -20,8 +20,25 @@ func main() {
 
 	token, err := sqldb.Token()
 	if err != nil {
-		fmt.Println("sqldb.GetToken: ", err)
-		return
+		if err.Error() == "no such table: settings" {
+			fmt.Printf("Creating tables...")
+			err := sqldb.CreateTables()
+			if err != nil {
+				fmt.Println("sqldb.CreateTables: ", err)
+				return
+			}
+			fmt.Println("✅")
+
+			var input string
+			fmt.Printf("Bot token: ")
+			fmt.Scanln(&input)
+			sqldb.SetToken(input)
+
+			token, _ = sqldb.Token()
+		} else {
+			fmt.Println("sqldb.GetToken: ", err)
+			return
+		}
 	}
 
 	session, err := discordgo.New("Bot " + token)
@@ -45,7 +62,6 @@ func main() {
 		fmt.Println("discordgo.Open: ", err)
 		return
 	}
-
 	defer session.Close()
 
 	stop := make(chan os.Signal, 1)

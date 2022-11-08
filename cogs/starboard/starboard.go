@@ -8,6 +8,7 @@ import (
 
 	"github.com/anaskhan96/soup"
 	"github.com/bwmarrin/discordgo"
+	"roguezilla.github.io/starboard/cogs/galleries/reddit"
 	"roguezilla.github.io/starboard/sqldb"
 	"roguezilla.github.io/starboard/utils"
 )
@@ -139,7 +140,13 @@ func buildEmbedInfo(s *discordgo.Session, m *discordgo.Message) embedInfo {
 					e.MediaURL = m.Attachments[0].URL
 				}
 			} else {
-				// placeholder for when customs embeds gets implemented
+				if reddit.ValidateEmbed(m.Embeds) {
+					e.Flag = "image"
+					e.MediaURL = m.Embeds[0].Image.URL
+					if user, err := s.User(m.Embeds[0].Fields[0].Value[2 : len(m.Embeds[0].Fields[0].Value)-1]); err == nil {
+						e.CustomAuthor = user
+					}
+				}
 			}
 		}
 	}
