@@ -3,7 +3,6 @@ package utils
 import "github.com/bwmarrin/discordgo"
 
 func EmojiCount(s *discordgo.Session, m *discordgo.MessageReactionAdd) (int, error) {
-	// test change
 	users, err := s.MessageReactions(m.ChannelID, m.MessageID, m.Emoji.APIName(), 100, "", "")
 	if err != nil {
 		return -1, err
