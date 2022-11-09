@@ -6,13 +6,13 @@ you must enable the message content intent on your bot's application page:
 - clone the repository  
 `git clone https://github.com/Roguezilla/starboard-go.git`  
 also run  
-`git config core.fileMode false`
+`git config core.fileMode false`  
 - install reflex  
 `go install github.com/cespare/reflex@latest`  
 **if you are on ubuntu you can use**  
-`sudo apt get install reflex` 
+`sudo apt get install reflex`  
 - after installing the requirements run  
-`go run .`
+`go run .`  
 ![](https://i.imgur.com/hvOfUzT.png)
 - now `CTRL+C` and run:  
 `chmod 777 start.sh`  
