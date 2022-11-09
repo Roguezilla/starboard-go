@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"os/exec"
 	"strconv"
 	"strings"
 
@@ -28,6 +29,8 @@ func HandleMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		setCustomAmount(s, m, 2, split[1:]...)
 	case "sb!override":
 		starboard.ArchiveOverrideCommand(s, m, 1, split[1:]...)
+	case "sb!pull":
+		pull(s, m, 0, split[1:]...)
 	}
 }
 
@@ -144,6 +147,33 @@ func setCustomAmount(s *discordgo.Session, m *discordgo.MessageCreate, numArgs i
 
 	if err := sqldb.SetChannelAmount(m.GuildID, args[0][2:len(args[0])-1], parsed); err == nil {
 		s.ChannelMessageSendReply(m.ChannelID, "*✅*", m.Message.Reference())
+	}
+}
+
+func pull(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, args ...string) {
+	if !commandRunnable(s, m, numArgs, args...) {
+		return
+	}
+
+	cmd := exec.Command("git", "pull")
+	cmdOutput, err := cmd.Output()
+	if err != nil {
+		s.ChannelMessageSendReply(m.ChannelID, err.Error(), m.Message.Reference())
+		return
+	}
+
+	embed := discordgo.MessageEmbed{
+		Color: 0xffcc00,
+		Footer: &discordgo.MessageEmbedFooter{
+			Text: "by rogue#0001",
+		},
+		Title:       "Update Log",
+		Description: "```" + string(cmdOutput)[0:len(string(cmdOutput))-6] + "```",
+	}
+
+	if _, err := s.ChannelMessageSendEmbed(m.ChannelID, &embed); err != nil {
+		s.ChannelMessageSendReply(m.ChannelID, err.Error(), m.Reference())
+		return
 	}
 }
 
