@@ -16,10 +16,10 @@
     - tumblr
     - youtube
 - spoilers with a special embed :)
-- and others ([just check](cogs/starboard/starboard.go))
+- and others([just check](cogs/starboard/starboard.go))
 
 custom embeds for reddit, instagram, pixiv and twitter(videos only)  
-gallery support for both reddit and instagram
+gallery support for both reddit and instagram  
 ![](https://i.imgur.com/d7JJ9oy.gif)
 
 **bot in action**:  
