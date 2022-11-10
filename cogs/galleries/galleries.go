@@ -1,9 +1,10 @@
 package galleries
 
 import (
+	"starboard/cogs/galleries/instagram"
+	"starboard/cogs/galleries/reddit"
+
 	"github.com/bwmarrin/discordgo"
-	"roguezilla.github.io/starboard/cogs/galleries/instagram"
-	"roguezilla.github.io/starboard/cogs/galleries/reddit"
 )
 
 func HandleMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {

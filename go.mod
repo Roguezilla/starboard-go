@@ -1,4 +1,4 @@
-module roguezilla.github.io/starboard
+module starboard
 
 go 1.19
 

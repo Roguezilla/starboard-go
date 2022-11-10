@@ -6,8 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"starboard/sqldb"
+
 	"github.com/bwmarrin/discordgo"
-	"roguezilla.github.io/starboard/sqldb"
 )
 
 func main() {

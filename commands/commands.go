@@ -5,10 +5,11 @@ import (
 	"strconv"
 	"strings"
 
+	"starboard/cogs/starboard"
+	"starboard/sqldb"
+	"starboard/utils"
+
 	"github.com/bwmarrin/discordgo"
-	"roguezilla.github.io/starboard/cogs/starboard"
-	"roguezilla.github.io/starboard/sqldb"
-	"roguezilla.github.io/starboard/utils"
 )
 
 func HandleMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {

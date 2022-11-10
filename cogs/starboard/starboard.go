@@ -6,12 +6,13 @@ import (
 	"strconv"
 	"strings"
 
+	"starboard/cogs/galleries/instagram"
+	"starboard/cogs/galleries/reddit"
+	"starboard/sqldb"
+	"starboard/utils"
+
 	"github.com/anaskhan96/soup"
 	"github.com/bwmarrin/discordgo"
-	"roguezilla.github.io/starboard/cogs/galleries/instagram"
-	"roguezilla.github.io/starboard/cogs/galleries/reddit"
-	"roguezilla.github.io/starboard/sqldb"
-	"roguezilla.github.io/starboard/utils"
 )
 
 type embedInfo struct {

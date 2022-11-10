@@ -3,13 +3,14 @@ package main
 import (
 	"fmt"
 
+	"starboard/cogs/galleries"
+	"starboard/cogs/pixiv"
+	"starboard/cogs/starboard"
+	"starboard/cogs/twitter"
+	"starboard/commands"
+	"starboard/sqldb"
+
 	"github.com/bwmarrin/discordgo"
-	"roguezilla.github.io/starboard/cogs/galleries"
-	"roguezilla.github.io/starboard/cogs/pixiv"
-	"roguezilla.github.io/starboard/cogs/starboard"
-	"roguezilla.github.io/starboard/cogs/twitter"
-	"roguezilla.github.io/starboard/commands"
-	"roguezilla.github.io/starboard/sqldb"
 )
 
 func onReady(s *discordgo.Session, m *discordgo.Ready) {
