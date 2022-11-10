@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"starboard/sqldb"
@@ -12,16 +13,16 @@ import (
 )
 
 func main() {
-	err := sqldb.Open("db.db")
+	err := sqldb.Connect("db.db")
 	if err != nil {
-		fmt.Println("sqldb.Open: ", err)
+		fmt.Println("sqldb.Connect: ", err)
 		return
 	}
 	defer sqldb.Close()
 
 	token, err := sqldb.Token()
 	if err != nil {
-		if err.Error() == "no such table: settings" {
+		if strings.Contains(err.Error(), "no such table") {
 			fmt.Printf("Creating tables...")
 			err := sqldb.CreateTables()
 			if err != nil {
@@ -33,7 +34,13 @@ func main() {
 			var input string
 			fmt.Printf("Bot token: ")
 			fmt.Scanln(&input)
-			sqldb.SetToken(input)
+			err = sqldb.SetToken(input)
+			if err != nil {
+				fmt.Println("sqldb.SetToken: ", err)
+				return
+			}
+
+			fmt.Println("✅")
 
 			token, _ = sqldb.Token()
 		} else {
@@ -60,7 +67,7 @@ func main() {
 
 	err = session.Open()
 	if err != nil {
-		fmt.Println("discordgo.Open: ", err)
+		fmt.Println("session.Open: ", err)
 		return
 	}
 	defer session.Close()

@@ -8,7 +8,7 @@ import (
 
 var conn *sql.DB
 
-func Open(file string) error {
+func Connect(file string) error {
 	db, err := sql.Open("sqlite3", file)
 	if err == nil {
 		conn = db
