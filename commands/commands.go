@@ -14,12 +14,14 @@ import (
 
 func HandleMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	switch split := strings.Split(m.Content, " "); split[0] {
+	case "sb!help":
+		help(s, m, 0, split[1:]...)
 	case "sb!source":
 		source(s, m, 0, split[1:]...)
 	case "sb!setup":
 		setup(s, m, 3, split[1:]...)
-	case "sb!delete":
-		deleteArchiveEntry(s, m, 0, split[1:]...)
+	case "sb!unarchive":
+		unarchiveEntry(s, m, 0, split[1:]...)
 	case "sb!set_emoji":
 		setEmoji(s, m, 1, split[1:]...)
 	case "sb!set_channel":
@@ -35,18 +37,48 @@ func HandleMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
+func help(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, args ...string) {
+	if numArgs != len(args) {
+		s.ChannelMessageSendReply(m.ChannelID, "❌Invalid number of arguments, got "+strconv.Itoa(len(args))+" expected "+strconv.Itoa(numArgs)+".", m.Message.Reference())
+		return
+	}
+
+	content := "" +
+		"sb!help - list of commands\n" +
+		"sb!source - github link\n" +
+		"\n" +
+		"sb!setup <channel> <emote> <amount> - sets the bot up\n" +
+		"sb!set_emoji <emoji> - set the archive emoji\n" +
+		"sb!set_channel <channel> - set the archive channel\n" +
+		"sb!set_amount <amount> - set the minimum amount to archive something\n" +
+		"sb!set_channel_amount <channel> <amount> - set a custom minimum for the given channel\n" +
+		"sb!pull - updates the bot\n" +
+		"sb!unarchive - unarchives the message that's being replied to\n" +
+		"sb!override <link to image> - overrides the message that's being replied to with a custom image"
+
+	embed := discordgo.MessageEmbed{
+		Color: 0xffcc00,
+		Footer: &discordgo.MessageEmbedFooter{
+			Text: "by rogue#0001",
+		},
+		Description: "```\n" + content + "```",
+	}
+
+	s.ChannelMessageSendEmbedReply(m.ChannelID, &embed, m.Message.Reference())
+}
+
 func source(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, args ...string) {
 	if numArgs != len(args) {
 		s.ChannelMessageSendReply(m.ChannelID, "❌Invalid number of arguments, got "+strconv.Itoa(len(args))+" expected "+strconv.Itoa(numArgs)+".", m.Message.Reference())
 		return
 	}
 
-	s.ChannelMessageSendReply(m.ChannelID, "<https://github.com/Roguezilla/starboard>", m.Message.Reference())
+	s.ChannelMessageSendReply(m.ChannelID, "<https://github.com/Roguezilla/starboard-go>", m.Message.Reference())
 }
 
 func setup(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, args ...string) {
 	if numArgs != len(args) {
-		s.ChannelMessageSend(m.ChannelID, "❌Invalid number of arguments, got "+strconv.Itoa(len(args))+" expected "+strconv.Itoa(numArgs)+".")
+		s.ChannelMessageSendReply(m.ChannelID, "❌Invalid number of arguments, got "+strconv.Itoa(len(args))+" expected "+strconv.Itoa(numArgs)+".", m.Message.Reference())
 		return
 	}
 
@@ -84,7 +116,7 @@ func setup(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, args .
 	}
 }
 
-func deleteArchiveEntry(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, args ...string) {
+func unarchiveEntry(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, args ...string) {
 	if !commandRunnable(s, m, numArgs, args...) {
 		return
 	}
@@ -172,10 +204,7 @@ func pull(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, args ..
 		Description: "```" + string(cmdOutput)[0:len(string(cmdOutput))-6] + "```",
 	}
 
-	if _, err := s.ChannelMessageSendEmbed(m.ChannelID, &embed); err != nil {
-		s.ChannelMessageSendReply(m.ChannelID, err.Error(), m.Reference())
-		return
-	}
+	s.ChannelMessageSendEmbedReply(m.ChannelID, &embed, m.Message.Reference())
 }
 
 /* */
