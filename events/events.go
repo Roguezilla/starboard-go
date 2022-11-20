@@ -1,4 +1,4 @@
-package main
+package events
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func onReady(s *discordgo.Session, m *discordgo.Ready) {
+func OnReady(s *discordgo.Session, m *discordgo.Ready) {
 	s.UpdateStatusComplex(discordgo.UpdateStatusData{
 		Status: "idle",
 		Activities: []*discordgo.Activity{{
@@ -25,7 +25,7 @@ func onReady(s *discordgo.Session, m *discordgo.Ready) {
 	fmt.Println("->" + m.User.Username + " is ready.")
 }
 
-func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
@@ -36,7 +36,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	galleries.HandleMessageCreate(s, m)
 }
 
-func messageReactionAdd(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
+func MessageReactionAdd(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 	if m.Member.User.ID == s.State.User.ID {
 		return
 	}

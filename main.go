@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"starboard/sqldb"
+	"starboard/events"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -56,9 +57,9 @@ func main() {
 	}
 
 	// handlers
-	session.AddHandlerOnce(onReady)
-	session.AddHandler(messageCreate)
-	session.AddHandler(messageReactionAdd)
+	session.AddHandlerOnce(events.OnReady)
+	session.AddHandler(events.MessageCreate)
+	session.AddHandler(events.MessageReactionAdd)
 
 	// intents
 	session.Identify.Intents |= discordgo.IntentMessageContent
