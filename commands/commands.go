@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"log"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -83,16 +84,18 @@ func setup(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, args .
 	}
 
 	if has, err := utils.CheckPermission(s, m.Message, discordgo.PermissionManageMessages); !has {
-		s.ChannelMessageSendReply(m.ChannelID, "❌You don't have permission to do that.", m.Message.Reference())
-		return
-	} else if err != nil {
-		s.ChannelMessageSendReply(m.ChannelID, err.Error(), m.Message.Reference())
-		return
+		if err != nil {
+			log.Println("commands.go setup utils.CheckPermission:", err)
+			return
+		} else {
+			s.ChannelMessageSendReply(m.ChannelID, "❌You don't have permission to do that.", m.Message.Reference())
+			return
+		}
 	}
 
 	setup, err := sqldb.IsSetup(m.GuildID)
 	if err != nil {
-		s.ChannelMessageSendReply(m.ChannelID, err.Error(), m.Message.Reference())
+		log.Println("commands.go setup sqldb.IsSetup:", err)
 		return
 	} else if setup {
 		s.ChannelMessageSendReply(m.ChannelID, "❌Server already set-up.", m.Message.Reference())
@@ -191,7 +194,7 @@ func pull(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, args ..
 	cmd := exec.Command("git", "pull")
 	cmdOutput, err := cmd.Output()
 	if err != nil {
-		s.ChannelMessageSendReply(m.ChannelID, err.Error(), m.Message.Reference())
+		log.Println("commands.go pull cmd.Output:", err)
 		return
 	}
 
@@ -215,16 +218,18 @@ func commandRunnable(s *discordgo.Session, m *discordgo.MessageCreate, numArgs i
 	}
 
 	if has, err := utils.CheckPermission(s, m.Message, discordgo.PermissionManageMessages); !has {
-		s.ChannelMessageSendReply(m.ChannelID, "❌You don't have permission to do that.", m.Message.Reference())
-		return false
-	} else if err != nil {
-		s.ChannelMessageSendReply(m.ChannelID, err.Error(), m.Message.Reference())
-		return false
+		if err != nil {
+			log.Println("commands.go commandRunnable utils.CheckPermission:", err)
+			return false
+		} else {
+			s.ChannelMessageSendReply(m.ChannelID, "❌You don't have permission to do that.", m.Message.Reference())
+			return false
+		}
 	}
 
 	setup, err := sqldb.IsSetup(m.GuildID)
 	if err != nil {
-		s.ChannelMessageSendReply(m.ChannelID, err.Error(), &discordgo.MessageReference{GuildID: m.GuildID, ChannelID: m.ChannelID, MessageID: m.ID})
+		log.Println("commands.go commandRunnable sqldb.IsSetup:", err)
 		return false
 	} else if !setup {
 		s.ChannelMessageSendReply(m.ChannelID, "❌Server has not been set-up.", m.Message.Reference())

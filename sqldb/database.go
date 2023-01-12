@@ -8,13 +8,8 @@ import (
 
 var conn *sql.DB
 
-func Connect(file string) error {
-	db, err := sql.Open("sqlite3", file)
-	if err == nil {
-		conn = db
-	}
-
-	return err
+func Connect(file string) {
+	conn, _ = sql.Open("sqlite3", file)
 }
 
 func Close() {

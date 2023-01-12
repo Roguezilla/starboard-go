@@ -2,6 +2,7 @@ package events
 
 import (
 	"fmt"
+	"log"
 
 	"starboard/cogs/galleries"
 	"starboard/cogs/pixiv"
@@ -43,7 +44,7 @@ func MessageReactionAdd(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 
 	setup, err := sqldb.IsSetup(m.GuildID)
 	if err != nil {
-		s.ChannelMessageSendReply(m.ChannelID, err.Error(), &discordgo.MessageReference{GuildID: m.GuildID, ChannelID: m.ChannelID, MessageID: m.MessageID})
+		log.Println("events.go MessageReactionAdd sqldb.IsSetup:", err)
 		return
 	} else if !setup {
 		return

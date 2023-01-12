@@ -2,32 +2,28 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 
-	"starboard/sqldb"
 	"starboard/events"
+	"starboard/sqldb"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 func main() {
-	err := sqldb.Connect("db.db")
-	if err != nil {
-		fmt.Println("sqldb.Connect: ", err)
-		return
-	}
+	sqldb.Connect("db.db")
 	defer sqldb.Close()
 
 	token, err := sqldb.Token()
 	if err != nil {
 		if strings.Contains(err.Error(), "no such table") {
 			fmt.Printf("Creating tables...")
-			err := sqldb.CreateTables()
-			if err != nil {
-				fmt.Println("sqldb.CreateTables: ", err)
+			if err = sqldb.CreateTables(); err != nil {
+				log.Println("main.go main sqldb.CreateTables:", err)
 				return
 			}
 			fmt.Println("✅")
@@ -35,9 +31,9 @@ func main() {
 			var input string
 			fmt.Printf("Bot token: ")
 			fmt.Scanln(&input)
-			err = sqldb.SetToken(input)
-			if err != nil {
-				fmt.Println("sqldb.SetToken: ", err)
+
+			if err = sqldb.SetToken(input); err != nil {
+				log.Println("main.go main sqldb.SetToken:", err)
 				return
 			}
 
@@ -45,14 +41,14 @@ func main() {
 
 			token, _ = sqldb.Token()
 		} else {
-			fmt.Println("sqldb.GetToken: ", err)
+			log.Println("main.go main sqldb.GetToken::", err)
 			return
 		}
 	}
 
 	session, err := discordgo.New("Bot " + token)
 	if err != nil {
-		fmt.Println("discordgo.New: ", err)
+		log.Println("main.go main discordgo.New::", err)
 		return
 	}
 
@@ -68,7 +64,7 @@ func main() {
 
 	err = session.Open()
 	if err != nil {
-		fmt.Println("session.Open: ", err)
+		log.Println("main.go main session.Open::", err)
 		return
 	}
 	defer session.Close()

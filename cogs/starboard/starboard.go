@@ -1,6 +1,7 @@
 package starboard
 
 import (
+	"log"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -159,7 +160,7 @@ func buildEmbedInfo(s *discordgo.Session, m *discordgo.Message) embedInfo {
 func HandleMessageReactionAdd(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 	archived, err := sqldb.IsArchived(m.GuildID, m.ChannelID, m.MessageID)
 	if err != nil {
-		s.ChannelMessageSendReply(m.ChannelID, err.Error(), &discordgo.MessageReference{GuildID: m.GuildID, ChannelID: m.ChannelID, MessageID: m.MessageID})
+		log.Println("starboard.go HandleMessageReactionAdd sqldb.IsArchived:", err)
 		return
 	}
 	if archived {
@@ -168,7 +169,7 @@ func HandleMessageReactionAdd(s *discordgo.Session, m *discordgo.MessageReaction
 
 	emoji, err := sqldb.Emoji(m.GuildID)
 	if err != nil {
-		s.ChannelMessageSendReply(m.ChannelID, err.Error(), &discordgo.MessageReference{GuildID: m.GuildID, ChannelID: m.ChannelID, MessageID: m.MessageID})
+		log.Println("starboard.go HandleMessageReactionAdd sqldb.Emoji:", err)
 		return
 	} else if emoji != m.Emoji.APIName() {
 		return
@@ -176,35 +177,35 @@ func HandleMessageReactionAdd(s *discordgo.Session, m *discordgo.MessageReaction
 
 	msg, err := s.ChannelMessage(m.ChannelID, m.MessageID)
 	if err != nil {
-		s.ChannelMessageSendReply(m.ChannelID, err.Error(), &discordgo.MessageReference{GuildID: m.GuildID, ChannelID: m.ChannelID, MessageID: m.MessageID})
+		log.Println("starboard.go HandleMessageReactionAdd s.ChannelMessage:", err)
 		return
 	}
 	msg.GuildID = m.GuildID // ChannelMessage returns Message with empty GuildID
 
 	amount, err := sqldb.ChannelAmount(m.GuildID, m.ChannelID)
 	if err != nil {
-		s.ChannelMessageSendReply(m.ChannelID, err.Error(), &discordgo.MessageReference{GuildID: m.GuildID, ChannelID: m.ChannelID, MessageID: m.MessageID})
+		log.Println("starboard.go HandleMessageReactionAdd sqldb.ChannelAmount:", err)
 		return
 	}
 
 	if amount == -1 {
 		amount, err = sqldb.GlobalAmount(m.GuildID)
 		if err != nil {
-			s.ChannelMessageSendReply(m.ChannelID, err.Error(), &discordgo.MessageReference{GuildID: m.GuildID, ChannelID: m.ChannelID, MessageID: m.MessageID})
+			log.Println("starboard.go HandleMessageReactionAdd sqldb.GlobalAmount:", err)
 			return
 		}
 	}
 
 	emojiCount, err := utils.EmojiCount(s, m)
 	if err != nil {
-		s.ChannelMessageSendReply(m.ChannelID, err.Error(), &discordgo.MessageReference{GuildID: m.GuildID, ChannelID: m.ChannelID, MessageID: m.MessageID})
+		log.Println("starboard.go HandleMessageReactionAdd utils.EmojiCount:", err)
 		return
 	}
 
 	if emojiCount >= amount {
 		channelID, err := sqldb.Channel(m.GuildID)
 		if err != nil {
-			s.ChannelMessageSendReply(m.ChannelID, err.Error(), &discordgo.MessageReference{GuildID: m.GuildID, ChannelID: m.ChannelID, MessageID: m.MessageID})
+			log.Println("starboard.go HandleMessageReactionAdd sqldb.Channel:", err)
 			return
 		}
 
@@ -248,18 +249,18 @@ func HandleMessageReactionAdd(s *discordgo.Session, m *discordgo.MessageReaction
 		})
 
 		if err := sqldb.Archive(msg.GuildID, msg.ChannelID, msg.ID); err != nil {
-			s.ChannelMessageSendReply(msg.ChannelID, err.Error(), msg.Reference())
+			log.Println("starboard.go HandleMessageReactionAdd sqldb.Archive:", err)
 			return
 		}
 
 		if _, err := s.ChannelMessageSendEmbed(channelID, &embed); err != nil {
-			s.ChannelMessageSendReply(msg.ChannelID, err.Error(), msg.Reference())
+			log.Println("starboard.go HandleMessageReactionAdd s.ChannelMessageSendEmbed:", err)
 			return
 		}
 
 		if embedInfo.Flag == "video" && embedInfo.MediaURL != "" {
 			if _, err := s.ChannelMessageSend(channelID, embedInfo.MediaURL); err != nil {
-				s.ChannelMessageSendReply(msg.ChannelID, err.Error(), msg.Reference())
+				log.Println("starboard.go HandleMessageReactionAdd s.ChannelMessageSend:", err)
 				return
 			}
 		}
@@ -268,27 +269,29 @@ func HandleMessageReactionAdd(s *discordgo.Session, m *discordgo.MessageReaction
 
 func ArchiveOverrideCommand(s *discordgo.Session, m *discordgo.MessageCreate, numArgs int, args ...string) {
 	if numArgs != len(args) {
-		s.ChannelMessageSend(m.ChannelID, "Invalid number of arguments, got "+strconv.Itoa(len(args))+" expected "+strconv.Itoa(numArgs)+".")
+		s.ChannelMessageSend(m.ChannelID, "❌Invalid number of arguments, got "+strconv.Itoa(len(args))+" expected "+strconv.Itoa(numArgs)+".")
 		return
 	}
 
 	if has, err := utils.CheckPermission(s, m.Message, discordgo.PermissionManageMessages); !has {
-		s.ChannelMessageSendReply(m.ChannelID, "You don't have permission to do that.", m.Message.Reference())
-		return
-	} else if err != nil {
-		s.ChannelMessageSendReply(m.ChannelID, err.Error(), m.Message.Reference())
-		return
+		if err != nil {
+			log.Println("starboard.go ArchiveOverrideCommand tils.CheckPermission:", err)
+			return
+		} else {
+			s.ChannelMessageSendReply(m.ChannelID, "❌You don't have permission to do that.", m.Message.Reference())
+			return
+		}
 	}
 	/* */
 	if m.MessageReference == nil {
-		s.ChannelMessageSendReply(m.ChannelID, "You have to reply to the message you want to override.", m.Message.Reference())
+		s.ChannelMessageSendReply(m.ChannelID, "❌You have to reply to the message you want to override.", m.Message.Reference())
 		return
 	}
 
 	if _, ok := overrides[m.GuildID+m.ReferencedMessage.ChannelID+m.ReferencedMessage.ID]; !ok {
 		overrides[m.GuildID+m.ReferencedMessage.ChannelID+m.ReferencedMessage.ID] = args[0]
 	} else {
-		s.ChannelMessageSendReply(m.ChannelID, "Message already has override.", m.Message.Reference())
+		s.ChannelMessageSendReply(m.ChannelID, "❌Message already has override.", m.Message.Reference())
 	}
 
 	s.ChannelMessageDelete(m.ChannelID, m.ID)
