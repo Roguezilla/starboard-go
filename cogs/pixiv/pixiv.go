@@ -6,7 +6,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var regex, _ = regexp.Compile(`^https:\/\/(?:www\.)?pixiv\.net\/(?:en\/)?artworks\/(\d+)$`)
+var regex, _ = regexp.Compile(`^https?://(?:www\.)?pixiv\.net/(?:en/)?artworks/(\d+)$`)
 
 func HandleMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	pixivData := regex.FindStringSubmatch(m.Content)

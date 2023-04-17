@@ -20,7 +20,7 @@ type gallery struct {
 
 var galleryCache = map[string]*gallery{}
 
-var regex, _ = regexp.Compile(`^((?:(?:(?:https):(?://)+)(?:www\.)?)(?:instagram)\.com/p/.+)$`)
+var regex, _ = regexp.Compile(`^https?://www\.instagram\.com/p/[a-zA-Z/0-9]+$`)
 
 func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	match := regex.FindStringSubmatch(m.Content)
@@ -36,7 +36,7 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	embed := discordgo.MessageEmbed{
 		Title: title,
-		URL:   match[1],
+		URL:   match[0],
 		Color: 0xffcc00,
 		Image: &discordgo.MessageEmbedImage{
 			URL: imageLink,

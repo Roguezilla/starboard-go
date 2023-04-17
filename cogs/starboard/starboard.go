@@ -1,6 +1,7 @@
 package starboard
 
 import (
+	"fmt"
 	"log"
 	"net/url"
 	"regexp"
@@ -12,27 +13,31 @@ import (
 	"starboard/sqldb"
 	"starboard/utils"
 
-	"github.com/anaskhan96/soup"
 	"github.com/bwmarrin/discordgo"
 )
 
 type embedInfo struct {
-	Flag         string
-	Content      string
-	MediaURL     string
-	CustomAuthor *discordgo.User
+	Flag     string
+	Content  string
+	MediaURL string
+	Author   *discordgo.User
 }
 
 var overrides = map[string]string{}
 
 // this will never throw an error
-var urlRegex, _ = regexp.Compile(`((?:https?):(?://)+(?:[\w\d_.~\-!*'();:@&=+$,/?#[\]]*))`)
-var twitterRegex, _ = regexp.Compile(`https://(?:mobile.)?(vx)?twitter\.com/.+/status/\d+(?:/photo/(\d+))?`)
+var urlRegex, _ = regexp.Compile(`https?://[\w\d_.~\-!*'();:@&=+$,/?#[\]]*`)
+var twitterRegex, _ = regexp.Compile(`https?://vxtwitter\.com/.+/status/\d+`)
+var youtubeRegex, _ = regexp.Compile(`https?://(?:www\.)?youtube.com/watch\?v=[A-Za-z0-9_\-]{11}`)
+var shortytRegex, _ = regexp.Compile(`https?://youtu\.be/[A-Za-z0-9_\-]{11}`)
+var imgurRegex, _ = regexp.Compile(`https?://(?:i\.)?imgur.com/(?:gallery/.+|.+\..+)`)
+var tenorRegex, _ = regexp.Compile(`https?://tenor\.com/view/.+`)
 
 func buildEmbedInfo(s *discordgo.Session, m *discordgo.Message) embedInfo {
 	e := embedInfo{
 		Flag:    "message",
 		Content: m.Content,
+		Author:  m.Author,
 	}
 
 	if URL, ok := overrides[m.GuildID+m.ChannelID+m.ID]; ok {
@@ -52,76 +57,61 @@ func buildEmbedInfo(s *discordgo.Session, m *discordgo.Message) embedInfo {
 		if match != "" && len(m.Embeds) > 0 && len(m.Attachments) == 0 {
 			parsedURL, _ := url.Parse(match)
 
-			if strings.Contains(match, "deviantart.com") || strings.Contains(match, "tumblr.com") {
-				if resp, err := soup.Get(match); err == nil {
-					e.Flag = "image"
-					e.Content = "[Source](" + match + ")\n" + strings.TrimSpace(strings.ReplaceAll(m.Content, match, ""))
-					e.MediaURL = soup.HTMLParse(resp).Find("meta", "property", "og:image").Attrs()["content"]
-				}
-			} else if strings.Contains(match, "twitter.com") {
-				urlData := twitterRegex.FindStringSubmatch(match)
-
-				if urlData[1] != "" && m.Embeds[0].Video != nil {
+			if twitterRegex.FindString(match) != "" {
+				if m.Embeds[0].Video != nil {
 					e.Flag = "video"
 					e.MediaURL = m.Embeds[0].Video.URL
-				} else if m.Embeds[0].Image != nil {
+				} else {
 					e.Flag = "image"
-					e.MediaURL = m.Embeds[0].Image.URL
-					if urlData[2] != "" {
-						idx, err := strconv.ParseInt(urlData[2], 10, 64)
-						if err == nil {
-							e.MediaURL = m.Embeds[idx-1].Image.URL
-						}
-					}
+					e.MediaURL = m.Embeds[0].Thumbnail.URL
 				}
 
-				e.Content = "[Tweet](" + match + ")\n" + strings.TrimSpace(strings.ReplaceAll(m.Content, match, ""))
+				e.Content = "[" + m.Embeds[0].Title + "](" + match + ")\n\n" + m.Embeds[0].Description
 
 				if parsedURL.Query().Get("u") != "" {
 					if user, err := s.User(parsedURL.Query().Get("u")); err == nil {
-						e.CustomAuthor = user
+						e.Author = user
 					}
 				}
-			} else if strings.Contains(match, "youtube.com") || strings.Contains(match, "youtu.be") {
-				var videoID string
+			} else if youtubeRegex.FindString(match) != "" || shortytRegex.FindString(match) != "" {
+				videoID := strings.Split(match, "/")[2]
 				if parsedURL.Query().Get("v") != "" {
 					videoID = parsedURL.Query().Get("v")
-				} else {
-					videoID = strings.Split(match, "/")[2]
 				}
 
 				e.Flag = "image"
+
 				e.Content = "[Source](" + match + ")\n" + strings.TrimSpace(strings.ReplaceAll(m.Content, match, ""))
+
 				e.MediaURL = "https://img.youtube.com/vi/" + videoID + "/0.jpg"
-			} else if strings.Contains(match, "imgur") {
-				e.Flag = "image"
-				if !strings.Contains(match, "i.imgur") {
-					e.Content = "[Source](" + match + ")\n" + strings.TrimSpace(strings.ReplaceAll(m.Content, match, ""))
-					if resp, err := soup.Get(match); err == nil {
-						e.MediaURL = strings.ReplaceAll(soup.HTMLParse(resp).Find("meta", "property", "og:image").Attrs()["content"], "?fb", "")
-					}
-				} else {
-					e.Content = strings.TrimSpace(strings.ReplaceAll(m.Content, match, ""))
-					e.MediaURL = match
-				}
 			} else if regexp.MustCompile(`.mp4|.mov|.webm`).MatchString(match) {
 				e.Flag = "video"
-				e.Content = strings.TrimSpace(strings.ReplaceAll(m.Content, match, ""))
-				e.MediaURL = match
-			} else {
-				if m.Embeds[0].Thumbnail != nil || m.Embeds[0].Image != nil {
-					e.Flag = "image"
-					e.Content = "[Source](" + match + ")\n" + strings.TrimSpace(strings.ReplaceAll(m.Content, match, ""))
-					if m.Embeds[0].Thumbnail != nil {
-						e.MediaURL = m.Embeds[0].Thumbnail.URL
-					} else {
-						e.MediaURL = m.Embeds[0].Image.URL
-					}
 
-					if parsedURL.Query().Get("u") != "" {
-						if user, err := s.User(parsedURL.Query().Get("u")); err == nil {
-							e.CustomAuthor = user
-						}
+				e.Content = "[The video below](https://youtu.be/dQw4w9WgXcQ)\n" + strings.TrimSpace(strings.ReplaceAll(m.Content, match, ""))
+				fmt.Printf("e.Content: %v\n", e.Content)
+
+				e.MediaURL = match
+			} else if m.Embeds[0].Thumbnail != nil || m.Embeds[0].Image != nil {
+				e.Flag = "image"
+
+				e.Content = "[Source](" + match + ")\n" + strings.TrimSpace(strings.ReplaceAll(m.Content, match, ""))
+
+				if m.Embeds[0].Thumbnail != nil {
+					e.MediaURL = m.Embeds[0].Thumbnail.URL
+					if imgurRegex.FindString(match) != "" {
+						e.MediaURL = m.Embeds[0].Thumbnail.ProxyURL
+					} else if tenorRegex.FindString(match) != "" {
+						splitUrl := strings.Split(m.Embeds[0].Thumbnail.URL, "")
+						splitUrl[39] = strings.ToLower(splitUrl[39])
+						e.MediaURL = strings.ReplaceAll(strings.Join(splitUrl, ""), ".png", ".gif")
+					}
+				} else {
+					e.MediaURL = m.Embeds[0].Image.URL
+				}
+
+				if parsedURL.Query().Get("u") != "" {
+					if user, err := s.User(parsedURL.Query().Get("u")); err == nil {
+						e.Author = user
 					}
 				}
 			}
@@ -132,22 +122,28 @@ func buildEmbedInfo(s *discordgo.Session, m *discordgo.Message) embedInfo {
 
 				if isVideo {
 					e.Flag = "video"
+					if isSpoiler {
+						e.Flag = "image"
+					}
 				} else {
 					e.Flag = "image"
 				}
 
 				e.Content = m.Content
+				if isVideo {
+					e.Content = "[The video below](https://youtu.be/dQw4w9WgXcQ)\n" + strings.TrimSpace(strings.ReplaceAll(m.Content, match, ""))
+				}
+
+				e.MediaURL = m.Attachments[0].URL
 				if isSpoiler {
 					e.MediaURL = "https://i.imgur.com/GFn7HTJ.png"
-				} else {
-					e.MediaURL = m.Attachments[0].URL
 				}
 			} else {
 				if reddit.ValidateEmbed(m.Embeds) || instagram.ValidateEmbed(m.Embeds) {
 					e.Flag = "image"
 					e.MediaURL = m.Embeds[0].Image.URL
 					if user, err := s.User(m.Embeds[0].Fields[0].Value[2 : len(m.Embeds[0].Fields[0].Value)-1]); err == nil {
-						e.CustomAuthor = user
+						e.Author = user
 					}
 				}
 			}
@@ -218,17 +214,11 @@ func HandleMessageReactionAdd(s *discordgo.Session, m *discordgo.MessageReaction
 			},
 		}
 
-		if embedInfo.CustomAuthor != nil {
-			embed.Author = &discordgo.MessageEmbedAuthor{
-				Name:    embedInfo.CustomAuthor.Username,
-				IconURL: embedInfo.CustomAuthor.AvatarURL(""),
-			}
-		} else {
-			embed.Author = &discordgo.MessageEmbedAuthor{
-				Name:    msg.Author.Username,
-				IconURL: msg.Author.AvatarURL(""),
-			}
+		embed.Author = &discordgo.MessageEmbedAuthor{
+			Name:    embedInfo.Author.Username,
+			IconURL: embedInfo.Author.AvatarURL(""),
 		}
+
 		if embedInfo.Content != "" {
 			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
 				Name:   "What?",
