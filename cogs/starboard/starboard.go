@@ -28,8 +28,7 @@ var overrides = map[string]string{}
 // this will never throw an error
 var urlRegex, _ = regexp.Compile(`https?://[\w\d_.~\-!*'();:@&=+$,/?#[\]]*`)
 var twitterRegex, _ = regexp.Compile(`https?://vxtwitter\.com/.+/status/\d+`)
-var youtubeRegex, _ = regexp.Compile(`https?://(?:www\.)?youtube.com/watch\?v=[A-Za-z0-9_\-]{11}`)
-var shortytRegex, _ = regexp.Compile(`https?://youtu\.be/[A-Za-z0-9_\-]{11}`)
+var youtubeRegex, _ = regexp.Compile(`https?://(?:(?:www\.)?youtube.com/watch\?v=|youtu\.be/)[A-Za-z0-9_\-]{11}`)
 var imgurRegex, _ = regexp.Compile(`https?://(?:i\.)?imgur.com/(?:gallery/.+|.+\..+)`)
 var tenorRegex, _ = regexp.Compile(`https?://tenor\.com/view/.+`)
 
@@ -73,10 +72,13 @@ func buildEmbedInfo(s *discordgo.Session, m *discordgo.Message) embedInfo {
 						e.Author = user
 					}
 				}
-			} else if youtubeRegex.FindString(match) != "" || shortytRegex.FindString(match) != "" {
-				videoID := strings.Split(match, "/")[2]
+			} else if youtubeRegex.FindString(match) != "" {
+				videoID := ""
 				if parsedURL.Query().Get("v") != "" {
 					videoID = parsedURL.Query().Get("v")
+				} else {
+					videoID = strings.Split(match, "youtu.be/")[1][0:11]
+					fmt.Printf("videoID: %v\n", videoID)
 				}
 
 				e.Flag = "image"
