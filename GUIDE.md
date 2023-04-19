@@ -23,5 +23,5 @@ note that if you use this method, you likely need to add `:$HOME/go/bin` to your
 this will automatically restart the bot when it gets updated:  
 ![](https://i.imgur.com/FkGXoSU.png)
 7. all that's left is to setup the bot for your server:  
-`sb!setup <archive_channel> <archive_emote> <archive_emote_amount>`
+`sb!setup <archive_channel> <archive_emote> <archive_emote_amount>`  
 ![](https://i.imgur.com/ex6q23f.png)  
