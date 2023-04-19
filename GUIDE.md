@@ -12,8 +12,6 @@ also run
 `go install github.com/cespare/reflex@latest`  
 note that if you use this method, you likely need to add `:$HOME/go/bin` to your `$PATH` export in either `$HOME/.profile` or `/etc/profile`(depending where you initially put it), the end result being:  
 `export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin`    
-4.2. ubuntu  
-`sudo apt get install reflex`  
 5. after installing the requirements run  
 `go run .`  
 ![](https://i.imgur.com/hvOfUzT.png)
@@ -21,7 +19,9 @@ note that if you use this method, you likely need to add `:$HOME/go/bin` to your
 `chmod 777 start.sh`  
 `./start.sh` (use this command from now one to run the bot)  
 this will automatically restart the bot when it gets updated:  
-![](https://i.imgur.com/FkGXoSU.png)
+![](https://i.imgur.com/FkGXoSU.png)  
+6.1 if you get any go-sqlite3 errors you need to install build tools in your distro:  
+ubuntu: `sudo apt install build-essential`
 7. all that's left is to setup the bot for your server:  
 `sb!setup <archive_channel> <archive_emote> <archive_emote_amount>`  
 ![](https://i.imgur.com/ex6q23f.png)  
